@@ -70,7 +70,8 @@ func (op *DeleteOp) FromReader(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	op.Collection = string(name)
+	op.Collection = replaceDB(string(name))
+
 	_, err = io.ReadFull(r, b[:]) //Grab the flags
 	if err != nil {
 		return err

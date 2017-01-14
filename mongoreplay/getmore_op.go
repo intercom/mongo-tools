@@ -72,7 +72,7 @@ func (op *GetMoreOp) FromReader(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	op.Collection = string(name)
+	op.Collection = replaceDB(string(name))
 	if _, err := io.ReadFull(r, b[:12]); err != nil {
 		return err
 	}

@@ -6,6 +6,7 @@ import (
 	"io"
 
 	"github.com/10gen/llmgo"
+
 	"github.com/10gen/llmgo/bson"
 )
 
@@ -83,7 +84,7 @@ func (op *UpdateOp) FromReader(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	op.Collection = string(name)
+	op.Collection = replaceDB(string(name))
 
 	if _, err := io.ReadFull(r, b[:]); err != nil { // grab the flags
 		return err

@@ -14,17 +14,20 @@ import (
 type PlayCommand struct {
 	GlobalOpts *Options `no-flag:"true"`
 	StatOptions
-	PlaybackFile string  `description:"path to the playback file to play from" short:"p" long:"playback-file" required:"yes"`
-	Speed        float64 `description:"multiplier for playback speed (1.0 = real-time, .5 = half-speed, 3.0 = triple-speed, etc.)" long:"speed" default:"1.0"`
-	URL          string  `short:"h" long:"host" description:"Location of the host to play back against" default:"mongodb://localhost:27017"`
-	Repeat       int     `long:"repeat" description:"Number of times to play the playback file" default:"1"`
-	QueueTime    int     `long:"queueTime" description:"don't queue ops much further in the future than this number of seconds" default:"15"`
-	NoPreprocess bool    `long:"no-preprocess" description:"don't preprocess the input file to premap data such as mongo cursorIDs"`
-	Gzip         bool    `long:"gzip" description:"decompress gzipped input"`
-	Collect      string  `long:"collect" description:"Stat collection format; 'format' option uses the --format string" choice:"json" choice:"format" choice:"none" default:"none"`
+	PlaybackFile  string  `description:"path to the playback file to play from" short:"p" long:"playback-file" required:"yes"`
+	Speed         float64 `description:"multiplier for playback speed (1.0 = real-time, .5 = half-speed, 3.0 = triple-speed, etc.)" long:"speed" default:"1.0"`
+	URL           string  `short:"h" long:"host" description:"Location of the host to play back against" default:"mongodb://localhost:27017"`
+	Repeat        int     `long:"repeat" description:"Number of times to play the playback file" default:"1"`
+	QueueTime     int     `long:"queueTime" description:"don't queue ops much further in the future than this number of seconds" default:"15"`
+	NoPreprocess  bool    `long:"no-preprocess" description:"don't preprocess the input file to premap data such as mongo cursorIDs"`
+	Gzip          bool    `long:"gzip" description:"decompress gzipped input"`
+	Collect       string  `long:"collect" description:"Stat collection format; 'format' option uses the --format string" choice:"json" choice:"format" choice:"none" default:"none"`
+	ForceDatabase string  `long:"force-database" description:"Change database requests are sent against. admin and local databases are still preserved!" default:""`
 }
 
 const queueGranularity = 1000
+
+var ForceDatabase string
 
 // NewOpChanFromFile runs a goroutine that will read and unmarshal recorded ops
 // from a file and push them in to a recorded op chan. Any errors encountered
@@ -179,6 +182,8 @@ func (play *PlayCommand) Execute(args []string) error {
 		return err
 	}
 	play.GlobalOpts.SetLogging()
+
+	ForceDatabase = play.ForceDatabase
 
 	statColl, err := newStatCollector(play.StatOptions, play.Collect, true, true)
 	if err != nil {

@@ -116,7 +116,7 @@ func (op *QueryOp) FromReader(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	op.Collection = string(name)
+	op.Collection = replaceDB(string(name))
 
 	if _, err := io.ReadFull(r, b[:]); err != nil {
 		return err
@@ -135,7 +135,7 @@ func (op *QueryOp) FromReader(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	currentRead := len(queryAsSlice) + len(op.Collection) + 1 + 12 + MsgHeaderLen
+	currentRead := len(queryAsSlice) + len(name) + 1 + 12 + MsgHeaderLen
 	if int(op.Header.MessageLength) > currentRead {
 		selectorAsSlice, err := ReadDocument(r)
 		if err != nil {

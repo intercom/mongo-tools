@@ -190,7 +190,7 @@ func (op *CommandOp) FromReader(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	op.Database = string(database)
+	op.Database = replaceDB(string(database))
 
 	commandName, err := readCStringFromReader(r)
 	if err != nil {

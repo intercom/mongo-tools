@@ -70,7 +70,7 @@ func (op *InsertOp) FromReader(r io.Reader) error {
 	if err != nil {
 		return err
 	}
-	op.Collection = string(name)
+	op.Collection = replaceDB(string(name))
 	op.Documents = make([]interface{}, 0)
 
 	docLen := 0
