@@ -117,3 +117,49 @@ func IsDriverOp(op Op) bool {
 		return false
 	}
 }
+
+func ExtractOpType(op Op) string {
+	switch op.OpCode() {
+	case 1:
+		return "reply"
+	case 2001:
+		return "update"
+	case 2002:
+		return "insert"
+	case 2004:
+		return extractQueryOpType(op.(*QueryOp))
+	case 2005:
+		return "getMore"
+	case 2006:
+		return "delete"
+	case 2007:
+		return "killCursors"
+	case 2010:
+		return op.Meta().Command
+	case 2011:
+		return "commandreply"
+	case 2012:
+		return "compressed"
+	default:
+		return "unknown_by_code"
+	}
+}
+
+func extractCommandOpType(op Op) string {
+	switch cmdOp := op.(type) {
+	case *CommandOp:
+		return cmdOp.CommandName
+	case *CommandReplyOp:
+		return "commandreply"
+	default:
+		return op.Meta().Command
+	}
+}
+
+func extractQueryOpType(op *QueryOp) string {
+	opType, commandType := extractOpType(op.Query)
+	if opType == "command" {
+		return commandType
+	}
+	return opType
+}

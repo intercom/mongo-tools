@@ -209,15 +209,16 @@ func (context *ExecutionContext) Execute(op *RecordedOp, session *mgo.Session) (
 		toolDebugLogger.Logvf(Always, "Skipping incomplete op: %v", op.RawOp.Header.OpCode)
 		return nil, nil, nil
 	}
+
+	if shouldSkipCommand(ExtractOpType(opToExec)) {
+		return nil, nil, nil
+	}
+
 	if recordedReply, ok := opToExec.(*ReplyOp); ok {
 		context.AddFromFile(recordedReply, op)
 	} else if recordedCommandReply, ok := opToExec.(*CommandReplyOp); ok {
 		context.AddFromFile(recordedCommandReply, op)
 	} else {
-		if IsDriverOp(opToExec) {
-			return opToExec, nil, nil
-		}
-
 		if rewriteable, ok1 := opToExec.(cursorsRewriteable); ok1 {
 			ok2, err := context.rewriteCursors(rewriteable, op.SeenConnectionNum)
 			if err != nil {

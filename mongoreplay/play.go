@@ -14,15 +14,17 @@ import (
 type PlayCommand struct {
 	GlobalOpts *Options `no-flag:"true"`
 	StatOptions
-	PlaybackFile  string  `description:"path to the playback file to play from" short:"p" long:"playback-file" required:"yes"`
-	Speed         float64 `description:"multiplier for playback speed (1.0 = real-time, .5 = half-speed, 3.0 = triple-speed, etc.)" long:"speed" default:"1.0"`
-	URL           string  `short:"h" long:"host" description:"Location of the host to play back against" default:"mongodb://localhost:27017"`
-	Repeat        int     `long:"repeat" description:"Number of times to play the playback file" default:"1"`
-	QueueTime     int     `long:"queueTime" description:"don't queue ops much further in the future than this number of seconds" default:"15"`
-	NoPreprocess  bool    `long:"no-preprocess" description:"don't preprocess the input file to premap data such as mongo cursorIDs"`
-	Gzip          bool    `long:"gzip" description:"decompress gzipped input"`
-	Collect       string  `long:"collect" description:"Stat collection format; 'format' option uses the --format string" choice:"json" choice:"format" choice:"none" default:"none"`
-	ForceDatabase string  `long:"force-database" description:"Change database requests are sent against. admin and local databases are still preserved!" default:""`
+	PlaybackFile       string   `description:"path to the playback file to play from" short:"p" long:"playback-file" required:"yes"`
+	Speed              float64  `description:"multiplier for playback speed (1.0 = real-time, .5 = half-speed, 3.0 = triple-speed, etc.)" long:"speed" default:"1.0"`
+	URL                string   `short:"h" long:"host" description:"Location of the host to play back against" default:"mongodb://localhost:27017"`
+	Repeat             int      `long:"repeat" description:"Number of times to play the playback file" default:"1"`
+	QueueTime          int      `long:"queueTime" description:"don't queue ops much further in the future than this number of seconds" default:"15"`
+	NoPreprocess       bool     `long:"no-preprocess" description:"don't preprocess the input file to premap data such as mongo cursorIDs"`
+	Gzip               bool     `long:"gzip" description:"decompress gzipped input"`
+	Collect            string   `long:"collect" description:"Stat collection format; 'format' option uses the --format string" choice:"json" choice:"format" choice:"none" default:"none"`
+	ForceDatabase      string   `long:"force-database" description:"Change database requests are sent against. admin and local databases are still preserved!" default:""`
+	SkipCommand        []string `long:"skip-command" description:"Commands not being sent to database. Useful for excluding driver-level commands."`
+	PlayDriverCommands bool     `long:"play-driver-commands" description:"Plays recorded isMaster, getnonce, saslStart and saslContinue commands"`
 }
 
 const queueGranularity = 1000
@@ -183,6 +185,12 @@ func (play *PlayCommand) Execute(args []string) error {
 	}
 	play.GlobalOpts.SetLogging()
 
+	commandsToSkip := play.SkipCommand[:]
+	if !play.PlayDriverCommands {
+		commandsToSkip = append(commandsToSkip, "ping", "ismaster", "isMaster", "getnonce", "saslStart", "saslContinue")
+	}
+	initiailizeSkipCommands(commandsToSkip)
+
 	ForceDatabase = play.ForceDatabase
 
 	statColl, err := newStatCollector(play.StatOptions, play.Collect, true, true)
@@ -254,6 +262,7 @@ func Play(context *ExecutionContext,
 		if op.Seen.IsZero() {
 			return fmt.Errorf("Can't play operation found with zero-timestamp: %#v", op)
 		}
+
 		if recordingStartTime.IsZero() {
 			recordingStartTime = op.Seen.Time
 			playbackStartTime = time.Now()
