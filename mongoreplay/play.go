@@ -24,6 +24,7 @@ type PlayCommand struct {
 	Collect            string   `long:"collect" description:"Stat collection format; 'format' option uses the --format string" choice:"json" choice:"format" choice:"none" default:"none"`
 	ForceDatabase      string   `long:"force-database" description:"Change database requests are sent against. admin and local databases are still preserved!" default:""`
 	SkipCommand        []string `long:"skip-command" description:"Commands not being sent to database. Useful for excluding driver-level commands."`
+	SkipDatabase        []string `long:"skip-database" description:"Databases not being touched by the replay. Useful for excluding oplog/admin commands."`
 	PlayDriverCommands bool     `long:"play-driver-commands" description:"Plays recorded isMaster, getnonce, saslStart and saslContinue commands"`
 }
 
@@ -190,6 +191,7 @@ func (play *PlayCommand) Execute(args []string) error {
 		commandsToSkip = append(commandsToSkip, "ping", "ismaster", "isMaster", "getnonce", "saslStart", "saslContinue")
 	}
 	initiailizeSkipCommands(commandsToSkip)
+	initiailizeSkipDatabases(play.SkipDatabase)
 
 	ForceDatabase = play.ForceDatabase
 

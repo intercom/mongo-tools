@@ -3,6 +3,7 @@ package mongoreplay
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/10gen/llmgo"
 )
@@ -145,6 +146,31 @@ func ExtractOpType(op Op) string {
 	}
 }
 
+func ExtractDatabaseName(op Op) string {
+	switch op.OpCode() {
+	case 2001:
+		return extractDbFromCollection(op.(*UpdateOp).Collection)
+	case 2002:
+		return extractDbFromCollection(op.(*InsertOp).Collection)
+	case 2004:
+		return extractDbFromCollection(op.(*QueryOp).Collection)
+	case 2005:
+		return extractDbFromCollection(op.(*GetMoreOp).Collection)
+	case 2006:
+		return extractDbFromCollection(op.(*DeleteOp).Collection)
+	case 2010:
+		switch cmdOp := op.(type) {
+		case *CommandOp:
+			return cmdOp.Database
+		case *CommandGetMore:
+			return cmdOp.Database
+		default:
+			return ""
+		}
+	}
+	return ""
+}
+
 func extractCommandOpType(op Op) string {
 	switch cmdOp := op.(type) {
 	case *CommandOp:
@@ -162,4 +188,12 @@ func extractQueryOpType(op *QueryOp) string {
 		return commandType
 	}
 	return opType
+}
+
+func extractDbFromCollection(collectionName string) string {
+	pos := strings.Index(collectionName, ".")
+	if pos == -1 {
+		return collectionName
+	}
+	return collectionName[:pos]
 }

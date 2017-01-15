@@ -210,7 +210,11 @@ func (context *ExecutionContext) Execute(op *RecordedOp, session *mgo.Session) (
 		return nil, nil, nil
 	}
 
-	if shouldSkipCommand(ExtractOpType(opToExec)) {
+	if shouldSkipCommandByOpType(ExtractOpType(opToExec)) {
+		return nil, nil, nil
+	}
+
+	if shouldSkipCommandByDatabaseName(ExtractDatabaseName(opToExec)) {
 		return nil, nil, nil
 	}
 
